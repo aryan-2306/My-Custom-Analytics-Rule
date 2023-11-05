@@ -1,0 +1,79 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/986e7881-32ae-4035-9bdc-4a81e2cda5a6')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/986e7881-32ae-4035-9bdc-4a81e2cda5a6')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2022-11-01-preview",
+            "properties": {
+                "displayName": "Multiple failed login attempts (more than 5)",
+                "description": "Send an email to admin and end users when there are multiple failed login attempts (more than 5) where MFA is not enabled",
+                "severity": "Medium",
+                "enabled": true,
+                "query": "let threshold = 5;\r\nSigninLogs\r\n| where ResultType contains \"50126\" and AuthenticationRequirement contains \"SingleFactorAuthentication\" \r\n| summarize count() by AuthenticationRequirement, UserDisplayName\r\n| extend Failed_signins = count_\r\n| where count_ >= threshold\r\n| project Failed_signins, UserDisplayName",
+                "queryFrequency": "PT5M",
+                "queryPeriod": "PT5M",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 5,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "startTimeUtc": null,
+                "tactics": [
+                    "PrivilegeEscalation",
+                    "CredentialAccess",
+                    "InitialAccess"
+                ],
+                "techniques": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AnyAlert",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": {
+                    "alertDynamicProperties": []
+                },
+                "customDetails": {},
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Name",
+                                "columnName": "UserDisplayName"
+                            },
+                            {
+                                "identifier": "FullName",
+                                "columnName": "UserDisplayName"
+                            },
+                            {
+                                "identifier": "AadUserId",
+                                "columnName": "Failed_signins"
+                            }
+                        ]
+                    }
+                ],
+                "sentinelEntitiesMappings": null,
+                "templateVersion": null
+            }
+        }
+    ]
+}
